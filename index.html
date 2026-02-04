@@ -157,13 +157,17 @@
             width: "100%",
             height: "100%",
             flow: isScrolled ? "scrolled" : "paginated",
-            manager: isScrolled ? "continuous" : "default"
+            manager: isScrolled ? "continuous" : "default",
+            // --- 核心修复：允许沙盒内的脚本运行 ---
+            allowScriptedContent: true 
         });
 
         window.rendition.display().then(function() {
             applyStyles();
             document.getElementById('pos').innerText = "ONLINE";
         });
+
+        // ... 后面的逻辑保持不变 ...
 
         window.rendition.on("relocated", function(location) {
             var percent = location.start.percentage;
