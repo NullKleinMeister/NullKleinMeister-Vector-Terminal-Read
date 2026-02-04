@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>VECTOR READER v0.8 - PERFORMANCE</title>
+    <title>VECTOR READER v1.1 - GAP RESTORED</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
 
@@ -20,7 +20,6 @@
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 60px;
             background: #050505;
-            overflow: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -28,29 +27,27 @@
         }
 
         #viewer-container {
+            /* 初始宽度 */
             width: 80%; 
             height: 90%; 
             position: relative;
-            border: 3px solid #228530; 
-            border-radius: 20px;
-            padding: 10px;
+            border: 4px solid #228530; 
+            border-radius: 40px;
+            padding: 20px;
             box-sizing: border-box;
-            
-            /* 性能优化：降低滤镜比例，从 40 降到 25，依然有弯曲感但省电 */
             filter: url(#curve); 
-            
-            transform: scale(0.95);
+            transform: scale(0.92);
+            /* 添加过渡动画，让调整 GAP 时更平滑 */
             transition: width 0.3s ease;
-            box-shadow: inset 0 0 40px rgba(34, 133, 48, 0.2);
-            background: rgba(0, 20, 0, 0.3);
+            box-shadow: inset 0 0 60px rgba(34, 133, 48, 0.3);
+            background: rgba(0, 15, 0, 0.5);
         }
 
         #viewer {
             width: 100%;
             height: 100%;
-            /* 性能优化：稍微减弱色散阴影的模糊半径 */
-            text-shadow: 1px 0 rgba(255,0,0,0.3), -1px 0 rgba(0,0,255,0.3);
-            filter: contrast(1.2) brightness(1.2) sepia(100%) hue-rotate(90deg);
+            text-shadow: 2px 0 rgba(255,0,0,0.4), -2px 0 rgba(0,0,255,0.4);
+            filter: contrast(1.2) brightness(1.1) sepia(100%) hue-rotate(90deg);
         }
 
         .screen-overlay {
@@ -58,28 +55,28 @@
             top: 0; left: 0; right: 0; bottom: 0;
             pointer-events: none;
             background: 
-                radial-gradient(circle at 50% 50%, rgba(255,255,255,0.03) 0%, transparent 60%),
-                linear-gradient(rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0.2) 50%);
+                radial-gradient(circle at 50% 50%, rgba(255,255,255,0.05) 0%, transparent 70%),
+                linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
             background-size: 100%, 100% 4px;
             z-index: 10;
-            box-shadow: inset 0 0 100px rgba(0,0,0,0.9);
+            box-shadow: inset 0 0 120px rgba(0,0,0,0.9);
         }
 
-        .nav-overlay {
+        .nav-zone {
             position: absolute;
             top: 0; bottom: 0; width: 15%;
             z-index: 20;
             cursor: pointer;
         }
-        .nav-prev { left: 0; }
-        .nav-next { right: 0; }
+        .nav-left { left: 0; }
+        .nav-right { right: 0; }
 
         .controls {
             position: absolute;
             bottom: 0; left: 0; right: 0;
             height: 60px;
             background: #000;
-            border-top: 1px solid #333;
+            border-top: 1px solid #228530;
             display: flex;
             align-items: center;
             justify-content: space-around;
@@ -89,19 +86,20 @@
 
         button {
             background: #000; color: #228530; border: 1px solid #228530;
-            padding: 4px 12px; cursor: pointer; font-family: inherit;
+            padding: 4px 10px; cursor: pointer; font-family: inherit;
+            font-size: 11px;
         }
         button:hover { background: #228530; color: #000; }
-        #pos { color: #228530; font-size: 12px; min-width: 80px; text-align: center; }
+        #pos { font-size: 12px; min-width: 120px; text-align: center; }
     </style>
 </head>
 <body>
 
-    <svg style="position: absolute; width: 0; height: 0; overflow: hidden;">
+    <svg style="position: absolute; width: 0; height: 0;">
         <defs>
             <filter id="curve">
                 <feImage xlink:href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmFkaWFsR3JhZGllbnQgaWQ9ImciIHI9IjAuNyI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjODAwMDAwIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMDAwMDAwIi8+PC9yYWRpYWxHcmFkaWVudD48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0idXJsKCNnKSIvPjwvc3ZnPg==" result="lens-map"/>
-                <feDisplacementMap in="SourceGraphic" in2="lens-map" scale="25" xChannelSelector="R" yChannelSelector="R"/>
+                <feDisplacementMap in="SourceGraphic" in2="lens-map" scale="40" xChannelSelector="R" yChannelSelector="R"/>
             </filter>
         </defs>
     </svg>
@@ -109,25 +107,22 @@
     <div class="screen">
         <div id="viewer-container">
             <div id="viewer"></div>
-            <div class="nav-overlay nav-prev" onclick="prevPage()"></div>
-            <div class="nav-overlay nav-next" onclick="nextPage()"></div>
+            <div class="nav-zone nav-left" onclick="prevPage()"></div>
+            <div class="nav-zone nav-right" onclick="nextPage()"></div>
         </div>
         <div class="screen-overlay"></div>
     </div>
 
     <div class="controls">
-        <input type="file" id="fileInput" accept=".epub" style="color:#228530;">
-        <div>
-            <button onclick="toggleFlow()">MODE: SWAP</button>
-            <span id="pos">READY</span>
-        </div>
+        <input type="file" id="fileInput" accept=".epub">
+        <span id="pos">SECTOR READY</span>
         <div>
             <button onclick="prevPage()">PREV</button>
             <button onclick="nextPage()">NEXT</button>
-            <span style="margin-left:10px;">SIZE</span>
+            <span style="margin: 0 5px;">| SIZE</span>
             <button onclick="changeFontSize(2)">+</button>
             <button onclick="changeFontSize(-2)">-</button>
-            <span style="margin-left:10px;">GAP</span>
+            <span style="margin: 0 5px;">| GAP</span>
             <button onclick="changeMargin(5)">+</button>
             <button onclick="changeMargin(-5)">-</button>
         </div>
@@ -138,7 +133,6 @@
     window.rendition = null;
     var currentFontSize = 18;
     var currentWidth = 80; 
-    var isScrolled = true;
 
     document.getElementById('fileInput').addEventListener('change', function(e) {
         var file = e.target.files[0];
@@ -156,32 +150,25 @@
         window.rendition = book.renderTo("viewer", {
             width: "100%",
             height: "100%",
-            flow: isScrolled ? "scrolled" : "paginated",
-            manager: isScrolled ? "continuous" : "default",
-            // --- 核心修复：允许沙盒内的脚本运行 ---
-            allowScriptedContent: true 
+            flow: "paginated",
+            manager: "default",
+            allowScriptedContent: true
         });
 
-        window.rendition.display().then(function() {
-            applyStyles();
-            document.getElementById('pos').innerText = "ONLINE";
+        window.rendition.display().then(() => applyStyles());
+
+        window.rendition.on("relocated", (loc) => {
+            var percent = loc.start.percentage;
+            document.getElementById('pos').innerText = "PROGRESS: " + Math.floor(percent * 100) + "%";
         });
 
-        // ... 后面的逻辑保持不变 ...
-
-        window.rendition.on("relocated", function(location) {
-            var percent = location.start.percentage;
-            document.getElementById('pos').innerText = "POS: " + Math.floor(percent * 100) + "%";
-        });
-
-        // 绑定键盘
+        document.addEventListener("keyup", handleKey);
         window.rendition.on("keyup", handleKey);
-        document.addEventListener("keyup", handleKey, false);
     }
 
     function handleKey(e) {
-        if ((e.keyCode || e.which) == 37) prevPage();
-        if ((e.keyCode || e.which) == 39) nextPage();
+        if (e.keyCode == 37) prevPage();
+        if (e.keyCode == 39) nextPage();
     }
 
     function prevPage() { if (window.rendition) window.rendition.prev(); }
@@ -193,21 +180,10 @@
             "body": {
                 "color": "#228530 !important",
                 "background": "transparent !important",
-                "padding": isScrolled ? "80px 0 !important" : "20px 40px !important"
-            },
-            "p": { "margin-bottom": "1.5em !important", "line-height": "1.6" }
+                "padding": "20px 40px !important"
+            }
         });
         window.rendition.themes.fontSize(currentFontSize + "px");
-    }
-
-    function toggleFlow() {
-        isScrolled = !isScrolled;
-        if (book) {
-            var cfi = window.rendition.currentLocation().start.cfi;
-            window.rendition.destroy();
-            renderBook();
-            window.rendition.display(cfi);
-        }
     }
 
     function changeFontSize(delta) {
@@ -215,11 +191,14 @@
         if (window.rendition) window.rendition.themes.fontSize(currentFontSize + "px");
     }
 
+    // GAP 功能回归
     function changeMargin(delta) {
         currentWidth -= delta; 
         if (currentWidth > 95) currentWidth = 95;
         if (currentWidth < 30) currentWidth = 30;
-        document.getElementById('viewer-container').style.width = currentWidth + "%";
+        var container = document.getElementById('viewer-container');
+        container.style.width = currentWidth + "%";
+        // 调整 container 大小后，必须通知 Epub.js 重新计算页面布局
         if (window.rendition) window.rendition.resize();
     }
 </script>
