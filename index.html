@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>VECTOR READER v0.7 - FIXED NAVIGATION</title>
+    <title>VECTOR READER v0.8 - PERFORMANCE</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
 
@@ -35,7 +35,10 @@
             border-radius: 20px;
             padding: 10px;
             box-sizing: border-box;
+            
+            /* 性能优化：降低滤镜比例，从 40 降到 25，依然有弯曲感但省电 */
             filter: url(#curve); 
+            
             transform: scale(0.95);
             transition: width 0.3s ease;
             box-shadow: inset 0 0 40px rgba(34, 133, 48, 0.2);
@@ -45,13 +48,9 @@
         #viewer {
             width: 100%;
             height: 100%;
-            text-shadow: 2px 0 rgba(255,0,0,0.5), -2px 0 rgba(0,0,255,0.5);
+            /* 性能优化：稍微减弱色散阴影的模糊半径 */
+            text-shadow: 1px 0 rgba(255,0,0,0.3), -1px 0 rgba(0,0,255,0.3);
             filter: contrast(1.2) brightness(1.2) sepia(100%) hue-rotate(90deg);
-        }
-
-        /* 隐藏分页模式下的原生滚动条，保持整洁 */
-        #viewer iframe {
-            overflow: hidden !important;
         }
 
         .screen-overlay {
@@ -60,13 +59,12 @@
             pointer-events: none;
             background: 
                 radial-gradient(circle at 50% 50%, rgba(255,255,255,0.03) 0%, transparent 60%),
-                linear-gradient(rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+                linear-gradient(rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0.2) 50%);
             background-size: 100%, 100% 4px;
             z-index: 10;
             box-shadow: inset 0 0 100px rgba(0,0,0,0.9);
         }
 
-        /* 交互层：用于点击翻页 */
         .nav-overlay {
             position: absolute;
             top: 0; bottom: 0; width: 15%;
@@ -101,9 +99,9 @@
 
     <svg style="position: absolute; width: 0; height: 0; overflow: hidden;">
         <defs>
-            <filter id="curve" x="-50%" y="-50%" width="200%" height="200%">
+            <filter id="curve">
                 <feImage xlink:href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmFkaWFsR3JhZGllbnQgaWQ9ImciIHI9IjAuNyI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjODAwMDAwIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMDAwMDAwIi8+PC9yYWRpYWxHcmFkaWVudD48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0idXJsKCNnKSIvPjwvc3ZnPg==" result="lens-map"/>
-                <feDisplacementMap in="SourceGraphic" in2="lens-map" scale="40" xChannelSelector="R" yChannelSelector="R"/>
+                <feDisplacementMap in="SourceGraphic" in2="lens-map" scale="25" xChannelSelector="R" yChannelSelector="R"/>
             </filter>
         </defs>
     </svg>
@@ -141,12 +139,10 @@
     var currentFontSize = 18;
     var currentWidth = 80; 
     var isScrolled = true;
-    var currentBookKey = ""; 
 
     document.getElementById('fileInput').addEventListener('change', function(e) {
         var file = e.target.files[0];
         if (!file) return;
-        currentBookKey = "epub_pos_" + file.name;
         var reader = new FileReader();
         reader.onload = function(event) {
             if (book) book.destroy();
@@ -164,19 +160,17 @@
             manager: isScrolled ? "continuous" : "default"
         });
 
-        var savedLocation = localStorage.getItem(currentBookKey);
-        window.rendition.display(savedLocation || undefined).then(function() {
+        window.rendition.display().then(function() {
             applyStyles();
-            document.getElementById('pos').innerText = savedLocation ? "RESTORED" : "ONLINE";
+            document.getElementById('pos').innerText = "ONLINE";
         });
 
         window.rendition.on("relocated", function(location) {
-            if (currentBookKey) localStorage.setItem(currentBookKey, location.start.cfi);
             var percent = location.start.percentage;
             document.getElementById('pos').innerText = "POS: " + Math.floor(percent * 100) + "%";
         });
 
-        // 绑定键盘翻页
+        // 绑定键盘
         window.rendition.on("keyup", handleKey);
         document.addEventListener("keyup", handleKey, false);
     }
@@ -186,13 +180,8 @@
         if ((e.keyCode || e.which) == 39) nextPage();
     }
 
-    function prevPage() {
-        if (window.rendition) window.rendition.prev();
-    }
-
-    function nextPage() {
-        if (window.rendition) window.rendition.next();
-    }
+    function prevPage() { if (window.rendition) window.rendition.prev(); }
+    function nextPage() { if (window.rendition) window.rendition.next(); }
 
     function applyStyles() {
         if (!window.rendition) return;
@@ -226,8 +215,7 @@
         currentWidth -= delta; 
         if (currentWidth > 95) currentWidth = 95;
         if (currentWidth < 30) currentWidth = 30;
-        var container = document.getElementById('viewer-container');
-        container.style.width = currentWidth + "%";
+        document.getElementById('viewer-container').style.width = currentWidth + "%";
         if (window.rendition) window.rendition.resize();
     }
 </script>
